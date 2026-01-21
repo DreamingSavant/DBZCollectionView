@@ -8,98 +8,248 @@
 import Foundation
 import UIKit
 
+// MARK: - Networking Error
+
+enum NetworkingError: Error, LocalizedError {
+    case urlError
+    case serverError
+    case dataError
+    case parsingError
+    case other
+    
+    var errorDescription: String? {
+        switch self {
+        case .urlError:
+            return "Invalid URL"
+        case .serverError:
+            return "Server returned an error"
+        case .dataError:
+            return "No data received"
+        case .parsingError:
+            return "Failed to parse response"
+        case .other:
+            return "An unexpected error occurred"
+        }
+    }
+}
+
+// MARK: - Networking Protocol
+
 protocol Networking {
     func getDataFromNetworkingLayer<T: Decodable>(url: URL, modelType: T.Type) async throws -> T
     func makeRequest(url: URL) -> URLRequest
     func fetchData<T: Decodable>(url: URL, modelType: T.Type, completion: @escaping ((Result<T, NetworkingError>) -> Void))
 }
 
+// MARK: - Image Cache
 
-enum NetworkingError: Error {
-    case urlError
-    case serverError
-    case dataError
-    case parsingError
-    case other
+final class ImageCache {
+    static let shared = ImageCache()
+    
+    private let cache = NSCache<NSURL, UIImage>()
+    
+    private init() {
+        cache.countLimit = 100
+        cache.totalCostLimit = 50 * 1024 * 1024 // 50 MB
+    }
+    
+    func image(for url: URL) -> UIImage? {
+        cache.object(forKey: url as NSURL)
+    }
+    
+    func setImage(_ image: UIImage, for url: URL) {
+        cache.setObject(image, forKey: url as NSURL)
+    }
 }
 
+// MARK: - Network Manager
 
-class NetworkManager: Networking {
+final class NetworkManager: Networking {
+    
+    // MARK: - Properties
+    
+    private let session: URLSession
+    private let decoder: JSONDecoder
+    private let imageCache: ImageCache
+    
+    // MARK: - Configuration
+    
+    private enum Configuration {
+        static let timeoutInterval: TimeInterval = 15.0
+        static let httpMethod = "GET"
+    }
+    
+    // MARK: - Initialization
+    
+    init(session: URLSession = .shared, imageCache: ImageCache = .shared) {
+        self.session = session
+        self.imageCache = imageCache
+        self.decoder = JSONDecoder()
+        self.decoder.keyDecodingStrategy = .convertFromSnakeCase
+    }
+    
+    // MARK: - Request Building
+    
     func makeRequest(url: URL) -> URLRequest {
         var request = URLRequest(url: url)
-        request.timeoutInterval = 15.0
-        request.httpMethod = "GET"
+        request.timeoutInterval = Configuration.timeoutInterval
+        request.httpMethod = Configuration.httpMethod
         return request
     }
     
-    func fetchData<T>(url: URL, modelType: T.Type, completion: @escaping ((Result<T, NetworkingError>) -> Void)) where T : Decodable {
-        let session = URLSession(configuration: .default)
-        let request  = makeRequest(url: url)
-        session.dataTask(with: request) { data, response, error in
-            if let error = error {
-                completion(.failure(NetworkingError.urlError))
-                return
-            }
-            guard let data = data else {
-                completion(.failure(NetworkingError.dataError))
-                return
-            }
+    // MARK: - Data Fetching (Completion-based)
+    
+    func fetchData<T: Decodable>(
+        url: URL,
+        modelType: T.Type,
+        completion: @escaping ((Result<T, NetworkingError>) -> Void)
+    ) {
+        let request = makeRequest(url: url)
+        
+        session.dataTask(with: request) { [weak self] data, response, error in
+            guard let self else { return }
             
-            let decoder = JSONDecoder()
-            
-            guard let parsedObject = try? decoder.decode(modelType, from: data) else {
-                completion(.failure(NetworkingError.parsingError))
+            if error != nil {
+                completion(.failure(.urlError))
                 return
             }
             
-            completion(.success(parsedObject))
+            guard let httpResponse = response as? HTTPURLResponse else {
+                completion(.failure(.serverError))
+                return
+            }
+            
+            guard (200...299).contains(httpResponse.statusCode) else {
+                completion(.failure(.serverError))
+                return
+            }
+            
+            guard let data else {
+                completion(.failure(.dataError))
+                return
+            }
+            
+            do {
+                let parsedObject = try self.decoder.decode(modelType, from: data)
+                completion(.success(parsedObject))
+            } catch {
+                completion(.failure(.parsingError))
+            }
         }
         .resume()
     }
     
-    func getDataFromNetworkingLayer<T>(url: URL, modelType: T.Type) async throws -> T where T : Decodable {
-        let (data, _) = try await URLSession.shared.data(from: url)
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        let parsedData = try decoder.decode(modelType, from: data)
-        return parsedData
+    // MARK: - Data Fetching (Async/Await)
+    
+    func getDataFromNetworkingLayer<T: Decodable>(
+        url: URL,
+        modelType: T.Type
+    ) async throws -> T {
+        let request = makeRequest(url: url)
+        
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw NetworkingError.serverError
+        }
+        
+        do {
+            return try decoder.decode(modelType, from: data)
+        } catch {
+            throw NetworkingError.parsingError
+        }
     }
     
-    func downloadImage(from urlString: String, completion: @escaping ((Result<UIImage, NetworkingError>) -> Void)) {
+    // MARK: - Image Downloading (Result-based)
+    
+    func downloadImage(
+        from urlString: String,
+        completion: @escaping ((Result<UIImage, NetworkingError>) -> Void)
+    ) {
         guard let url = URL(string: urlString) else {
-            completion(.failure(NetworkingError.urlError))
+            completion(.failure(.urlError))
             return
         }
         
-        let task = URLSession.shared.dataTask(with: url) { data, response, error in
-            guard let data = data, error == nil else {
-                completion(.failure(NetworkingError.dataError))
+        // Check cache first
+        if let cachedImage = imageCache.image(for: url) {
+            DispatchQueue.main.async {
+                completion(.success(cachedImage))
+            }
+            return
+        }
+        
+        session.dataTask(with: url) { [weak self] data, response, error in
+            guard error == nil else {
+                completion(.failure(.dataError))
                 return
             }
             
-            guard let image = UIImage(data: data) else {
-                completion(.failure(NetworkingError.other))
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                completion(.failure(.serverError))
                 return
             }
+            
+            guard let data, let image = UIImage(data: data) else {
+                completion(.failure(.other))
+                return
+            }
+            
+            // Cache the image
+            self?.imageCache.setImage(image, for: url)
+            
             DispatchQueue.main.async {
                 completion(.success(image))
             }
         }
-        task.resume()
+        .resume()
     }
     
-    func downloadImage(from url: URL, completion: @escaping (UIImage?, NetworkingError?) -> Void) {
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            if let error = error {
-                completion(nil, NetworkingError.serverError)
+    // MARK: - Image Downloading (Tuple-based)
+    
+    func downloadImage(
+        from url: URL,
+        completion: @escaping (UIImage?, NetworkingError?) -> Void
+    ) {
+        // Check cache first
+        if let cachedImage = imageCache.image(for: url) {
+            DispatchQueue.main.async {
+                completion(cachedImage, nil)
+            }
+            return
+        }
+        
+        session.dataTask(with: url) { [weak self] data, response, error in
+            if error != nil {
+                DispatchQueue.main.async {
+                    completion(nil, .urlError)
+                }
                 return
             }
             
-            guard let data = data, let image = UIImage(data: data) else {
-                completion(nil, NetworkingError.dataError)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200...299).contains(httpResponse.statusCode) else {
+                DispatchQueue.main.async {
+                    completion(nil, .serverError)
+                }
                 return
             }
-            completion(image, nil)
+            
+            guard let data, let image = UIImage(data: data) else {
+                DispatchQueue.main.async {
+                    completion(nil, .dataError)
+                }
+                return
+            }
+            
+            // Cache the image
+            self?.imageCache.setImage(image, for: url)
+            
+            DispatchQueue.main.async {
+                completion(image, nil)
+            }
         }
         .resume()
     }

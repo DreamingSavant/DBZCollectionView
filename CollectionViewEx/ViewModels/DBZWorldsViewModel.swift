@@ -27,10 +27,14 @@ class DBZWorldsViewModel {
         do {
             let worlds = try await network.getDataFromNetworkingLayer(url: url, modelType: DBZWorlds.self)
             self.dbzWorlds = worlds
+            #if DEBUG
             print(self.dbzWorlds)
+            #endif
         } catch {
             
+            #if DEBUG
             print(error.localizedDescription)
+            #endif
         }
     }
     

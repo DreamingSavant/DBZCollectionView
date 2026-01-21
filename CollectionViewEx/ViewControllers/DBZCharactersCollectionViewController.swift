@@ -35,23 +35,21 @@ class DBZCharactersCollectionViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        viewModel.getDBZCharacters()
 
         self.collectionView.delegate = self
         self.collectionView.dataSource = self
         
         setupConstraints()
-        DispatchQueue.main.async{
-            self.collectionView.reloadData()
+        
+        viewModel.getDBZCharacters { [weak self] in
+            self?.collectionView.reloadData()
         }
         
     }
     
-    override func viewWillAppear(_ animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) { 
         super.viewWillAppear(animated)
-        DispatchQueue.main.async{
-            self.collectionView.reloadData()
-        }
+        collectionView.reloadData()
     }
     
     func setupConstraints() {

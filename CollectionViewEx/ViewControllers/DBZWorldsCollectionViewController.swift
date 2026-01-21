@@ -34,8 +34,10 @@ class DBZWorldsCollectionViewController: UICollectionViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-       Task {
+       Task { [weak self] in
+           guard let self else { return }
            await self.viewModel.getDBZWorlds()
+           self.collectionView.reloadData()
         }
         
         setupCollectionView()
@@ -53,16 +55,11 @@ class DBZWorldsCollectionViewController: UICollectionViewController {
         // self.clearsSelectionOnViewWillAppear = false
         
         // Do any additional setup after loading the view.
-        DispatchQueue.main.async {
-            self.collectionView.reloadData()
-        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        DispatchQueue.main.async {
-            self.collectionView.reloadData()
-        }
+        collectionView.reloadData()
     }
 
     private func setupCollectionView() {

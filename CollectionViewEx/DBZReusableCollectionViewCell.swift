@@ -11,11 +11,13 @@ enum type {
     case World
 }
 
-class DBZReusableCollectionViewCell: UICollectionViewCell {
+final class DBZReusableCollectionViewCell: UICollectionViewCell {
     
-    static let identifier = DBZReusableCollectionViewCell.description()
+    static let identifier = String(describing: DBZReusableCollectionViewCell.self)
     
-    let dbzImageView: UIImageView = {
+    private var currentImageURL: URL?
+    
+    private let dbzImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.contentMode = .scaleAspectFit
@@ -23,17 +25,28 @@ class DBZReusableCollectionViewCell: UICollectionViewCell {
         return imageView
     }()
     
-    var nameLabel: UILabel = {
+    let nameLabel: UILabel = {
         let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
         return label
+    }()
+    
+    private let stackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.spacing = 10
+        stackView.alignment = .center
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        return stackView
     }()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        setupUI()
     }
     
     required init(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has been implemented")
+        fatalError("init(coder:) has not been implemented")
     }
     
     override class func awakeFromNib() {
@@ -42,45 +55,44 @@ class DBZReusableCollectionViewCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
+        currentImageURL = nil
         dbzImageView.image = nil
-        nameLabel.text = ""
+        nameLabel.text = nil
     }
     
     func configure(with imageURL: String, name: String) {
-        
-        let stackView = UIStackView()
-        stackView.axis = .vertical
-        stackView.spacing = 10
-        stackView.alignment = .center
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        
+        downloadImage(from: imageURL)
+        nameLabel.text = name
+    }
+    
+    private func setupUI() {
+        contentView.addSubview(stackView)
         stackView.addArrangedSubview(dbzImageView)
         stackView.addArrangedSubview(nameLabel)
         
-        downloadImage(from: imageURL)
-        nameLabel.text = name
-        
-        addSubview(stackView)
-        
         NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: topAnchor),
-            stackView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            stackView.bottomAnchor.constraint(equalTo: bottomAnchor)
+            stackView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            stackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            stackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            stackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
     }
-    func downloadImage(from url: String) {
-        guard let url = URL(string: url) else {
+    
+    private func downloadImage(from urlString: String) {
+        guard let url = URL(string: urlString) else {
             return
         }
         
+        currentImageURL = url
+        
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             guard let self = self else { return }
-            
-            if let data = data, let image = UIImage(data: data), url == url {
-                DispatchQueue.main.async {
-                    self.dbzImageView.image = image
-                }
+            guard url == self.currentImageURL else { return }
+            guard let data, let image = UIImage(data: data) else { return }
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                guard url == self.currentImageURL else { return }
+                self.dbzImageView.image = image
             }
         }.resume()
     }

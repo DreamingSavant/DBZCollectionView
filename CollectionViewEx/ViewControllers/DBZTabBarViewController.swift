@@ -42,6 +42,6 @@ class DBZTabBarViewController: UITabBarController {
 
 extension DBZTabBarViewController: UITabBarControllerDelegate {
     override func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
-        print("Selected \(item.title ?? "None")")
+        // Intentionally no logging in production.
     }
 }

@@ -20,16 +20,21 @@ class DBZCharactersViewModel {
         self.network = network
     }
     
-    func getDBZCharacters() {
+    func getDBZCharacters(onUpdate: (@MainActor () -> Void)? = nil) {
         guard let url = URL(string: ApiEndpoints.characterURL) else {
             // need to id error
             return
         }
-        network.fetchData(url: url, modelType: DBZModel.self, completion: { result in
+        network.fetchData(url: url, modelType: DBZModel.self, completion: { [weak self] result in
+            guard let self else { return }
             switch result {
             case .success(let characters):
                 self.dbzCharacters = characters
-                print(self.dbzCharacters)
+                if let onUpdate {
+                    Task { @MainActor in
+                        onUpdate()
+                    }
+                }
             case .failure(let error):
                 print(error)
             }

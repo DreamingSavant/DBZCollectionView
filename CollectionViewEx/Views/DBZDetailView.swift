@@ -33,7 +33,6 @@ class DBZDetailView: UIView {
     var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.isScrollEnabled = true
-        scrollView.contentSize = CGSize(width: .zero, height: scrollView.frame.height)
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         return scrollView
     }()
@@ -108,7 +107,7 @@ class DBZDetailView: UIView {
             mainStackView.addArrangedSubview(raceLabel)
             mainStackView.addArrangedSubview(genderLabel)
             mainStackView.addArrangedSubview(affiliationLabel)
-            downloadImage(from: item.image ?? "")
+            downloadImage(from: item.image)
             nameLabel.text = "Character Name: \(item.name)"
             descrptionLabel.text = "Character Info: \(item.description)"
             kiLabel.text = "Base Ki: \(item.ki)"
@@ -121,7 +120,7 @@ class DBZDetailView: UIView {
                 return
             }
             mainStackView.addArrangedSubview(isDestroyedLabel)
-            downloadImage(from: worldItem.image ?? "")
+            downloadImage(from: worldItem.image)
             nameLabel.text = "World Name: \(worldItem.name)"
             descrptionLabel.text = "Character Info: \(worldItem.description)"
             isDestroyedLabel.text = "Planet Status: \(worldItem.isDestroyed ? "Existing" :"Destroyed")"
@@ -133,10 +132,12 @@ class DBZDetailView: UIView {
     func setupConstraints() {
         
         translatesAutoresizingMaskIntoConstraints = false
+        let contentGuide = scrollView.contentLayoutGuide
+        let frameGuide = scrollView.frameLayoutGuide
         
         NSLayoutConstraint.activate([
             titleImageView.heightAnchor.constraint(equalToConstant: 300),
-            titleImageView.topAnchor.constraint(equalTo: topAnchor, constant: 20),
+            titleImageView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: 20),
             titleImageView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0),
             titleImageView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 0),
             
@@ -145,10 +146,10 @@ class DBZDetailView: UIView {
             scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
             
-            mainStackView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            mainStackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
-            mainStackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
-            mainStackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor)
+            mainStackView.topAnchor.constraint(equalTo: contentGuide.topAnchor),
+            mainStackView.bottomAnchor.constraint(equalTo: contentGuide.bottomAnchor),
+            mainStackView.leadingAnchor.constraint(equalTo: frameGuide.leadingAnchor, constant: 20),
+            mainStackView.trailingAnchor.constraint(equalTo: frameGuide.trailingAnchor, constant: -20)
         ])
     }
     

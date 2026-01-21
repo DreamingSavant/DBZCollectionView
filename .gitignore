@@ -1,0 +1,12 @@
+.DS_Store
+
+# Xcode user-specific files
+xcuserdata/
+*.xcuserstate
+
+# Breakpoints / user workspace state
+*.xcbkptlist
+
+# Build products
+DerivedData/
+build/
