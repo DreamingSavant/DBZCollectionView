@@ -24,6 +24,9 @@
 		C682A1162B951FF6004390F9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C682A1152B951FF6004390F9 /* Assets.xcassets */; };
 		C682A1192B951FF6004390F9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C682A1172B951FF6004390F9 /* LaunchScreen.storyboard */; };
 		C682A1232B95245B004390F9 /* UICollectionViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = C682A1222B95245B004390F9 /* UICollectionViewExtension.swift */; };
+		E1A2B3C42D8F123400ABCDEF /* DBZCharacterInlineDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A2B3C32D8F123400ABCDEF /* DBZCharacterInlineDetailView.swift */; };
+		E1A2B3C62D8F123400ABCDEF /* DBZCharacterExpandableCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A2B3C52D8F123400ABCDEF /* DBZCharacterExpandableCell.swift */; };
+		E1A2B3C82D8F123400ABCDEF /* DBZCharactersExpandableCollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A2B3C72D8F123400ABCDEF /* DBZCharactersExpandableCollectionViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,6 +49,9 @@
 		C682A1182B951FF6004390F9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		C682A11A2B951FF6004390F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C682A1222B95245B004390F9 /* UICollectionViewExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UICollectionViewExtension.swift; sourceTree = "<group>"; };
+		E1A2B3C32D8F123400ABCDEF /* DBZCharacterInlineDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBZCharacterInlineDetailView.swift; sourceTree = "<group>"; };
+		E1A2B3C52D8F123400ABCDEF /* DBZCharacterExpandableCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBZCharacterExpandableCell.swift; sourceTree = "<group>"; };
+		E1A2B3C72D8F123400ABCDEF /* DBZCharactersExpandableCollectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBZCharactersExpandableCollectionViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +81,7 @@
 				C67A40302BA273A400E287FD /* DBZWorldsCollectionViewController.swift */,
 				C67A40322BA273D600E287FD /* DBZTabBarViewController.swift */,
 				C67A40342BA274BC00E287FD /* DBZDetailViewController.swift */,
+				E1A2B3C72D8F123400ABCDEF /* DBZCharactersExpandableCollectionViewController.swift */,
 			);
 			path = ViewControllers;
 			sourceTree = "<group>";
@@ -101,6 +108,7 @@
 			isa = PBXGroup;
 			children = (
 				C67A40362BA274DA00E287FD /* DBZDetailView.swift */,
+				E1A2B3C32D8F123400ABCDEF /* DBZCharacterInlineDetailView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -133,6 +141,7 @@
 				C682A1222B95245B004390F9 /* UICollectionViewExtension.swift */,
 				C67A403C2BA2971300E287FD /* Models */,
 				C60C40362B9A3D5000864863 /* DBZReusableCollectionViewCell.swift */,
+				E1A2B3C52D8F123400ABCDEF /* DBZCharacterExpandableCell.swift */,
 				C67A403B2BA2970600E287FD /* ViewModels */,
 				C67A40382BA27BB300E287FD /* ViewControllers */,
 				C67A403D2BA2972A00E287FD /* Views */,
@@ -225,6 +234,9 @@
 				C682A10F2B951FF3004390F9 /* SceneDelegate.swift in Sources */,
 				C682A1232B95245B004390F9 /* UICollectionViewExtension.swift in Sources */,
 				C67A40312BA273A400E287FD /* DBZWorldsCollectionViewController.swift in Sources */,
+				E1A2B3C42D8F123400ABCDEF /* DBZCharacterInlineDetailView.swift in Sources */,
+				E1A2B3C62D8F123400ABCDEF /* DBZCharacterExpandableCell.swift in Sources */,
+				E1A2B3C82D8F123400ABCDEF /* DBZCharactersExpandableCollectionViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
